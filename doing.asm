@@ -422,3 +422,4 @@ SECTION "Variables", WRAM0
 ShadowOAM: DS 160 
 previous: DS 1
 current: DS 1
+caocao: DS 20
