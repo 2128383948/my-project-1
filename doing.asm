@@ -38,21 +38,59 @@ MainLoop:;----------------------------------------------------------------------
   call readKeys
   call MaybeReset  ;check if A was pressed not yet
   call selectobjchangedirection
-  ;call selectobjwaspressed
+  call selectobjwaspressed
   call WaitVBlank
   call CopyShadowOAMtoOAM
   jp MainLoop
 
 SECTION "Functions", ROM0;------------------------------------------------------------
 
+
+;选择块按下后放到背景后面，移动完变回来
 selectobjwaspressed:
   ld hl,current
   bit 2, [hl]  ; check if select was pressed
   call nz, .check
   ret
 .check:
+  ld a,[ShadowOAM]
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+1]
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  cp 12;B
+  jp z, .bingisselect
   ret
 
+.bingisselect
+  ld [hl],39;更改为其他
+  ld b,h
+  ld c,l
+  ld hl,ShadowOAM+2
+  ld [hl],0
+  ld h,b
+  ld l,c
+  ret
+
+;.bingisselect:
+  ;ld [hl],2
+  ;dec hl
+  ;ld [hl],2
+  ;inc hl
+  ;inc hl
+  ;ld [hl],2
+  ;ld a,32
+  ;add l
+  ;ld l,a
+  ;adc h
+  ;sub l
+  ;ld h,a
+  ;ld [hl],2
+  ;inc hl
+  ;ret
 
 
 selectobjchangedirection:
@@ -160,8 +198,9 @@ InitializeObjects:
   inc      hl
   ld       [hl], 2   ; smiling face
   inc      hl
+  ld      [hl], %10000000 ;under the background
   inc      hl
-  ; second object
+  ; second object for testing
   ld a,32+24*4
   ld [hl], a
   inc      hl          ; point to first object`s X
@@ -170,7 +209,7 @@ InitializeObjects:
   inc      hl
   ld       [hl], 0   ; empty
   inc      hl
-  ld       [hl], %10000000 ;under the background
+  ;ld       [hl], %10000000 ;under the background
   ret
 
 
@@ -719,7 +758,7 @@ Tiles:
   dw `03330000
   dw `03333330
   dw `00000000
-; .
+; . 37
   dw `00000000
   dw `00000000
   dw `00000000
@@ -728,7 +767,7 @@ Tiles:
   dw `00330000
   dw `00330000
   dw `00000000
-; -
+; - 38
   dw `00000000
   dw `00000000
   dw `00000000
@@ -736,6 +775,15 @@ Tiles:
   dw `00333300
   dw `00000000
   dw `00000000
+  dw `00000000
+;39 seclect
+  dw `00000000
+  dw `00033000
+  dw `00300300
+  dw `00300300
+  dw `00300300
+  dw `00300300
+  dw `00033000
   dw `00000000
 TilesEnd:
 
