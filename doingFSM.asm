@@ -38,6 +38,11 @@ EntryPoint:
   ld a, LCDCF_ON | LCDCF_OBJON | LCDCF_BGON | LCDCF_BG8000
   ld [rLCDC], a
 
+
+;初始化变量
+  ld a,1;初始化为1,
+  ld [positionincaocao],a
+
 MainLoop:;--------------------------------------------------------------------------------
   call readKeys
   call MaybeReset  ;check if A was pressed not yet
@@ -81,26 +86,33 @@ checkselect:
   cp 0;empty
   call z, returnstate0
   cp 12;B
-  jp z, bingisselect
+  call z, bingisselect
   cp 13;C
-  jp z, caocaosselect
+  call z, caocaosselect
   ret
 
-caocaosselect:
+caocaosselect:;会被多次调用-------------------------------------caocao
   ld a,13
   ld [currenttile],a;save caocao tile
   ld a,[currentpixel]
   ld h,a
   ld a,[currentpixel+1]
   ld l,a
-  ld [hl],39;更改为其他(改C)
 
-  call findpositionincao
+  call findpositionincao;if is 左上角，改图
+  ld a,[positionincaocao];在move后改回1
+  cp 1
+  jr z ,notcahngecaocao;not 左上角 不改图
+  
+  ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
+notcahngecaocao:
+  call returnstate0
+  ret
 
-findpositionincao:;检测对角是否为C 4 possible
+findpositionincao:;检测对角是否为C 
   ;检测是否在左上角
   ;hl+32*3+3检测右下角 下三行
   ld a,99
@@ -112,58 +124,10 @@ findpositionincao:;检测对角是否为C 4 possible
   ld a,[hl]
   cp 13
   call z, leftupcao
-  ;检测是否在右上角
-  ;hl-35+32-3
-  ld a, l        ; 将 L 的值加载到 A
-  sub 6
-  ld l, a        ; 将结果存回 L
-  ld a, h        ; 将 H 的值加载到 A
-  sbc 0          ; A = H - 借位
-  ld h, a 
-  ld a,[hl]
-  cp 13
-  call z, rightupcao
-  ;检测是否在右下角
-  ;hl-32*6
-  ld a, l        ; 将 L 的值加载到 A
-  sub 192
-  ld l, a        ; 将结果存回 L
-  ld a, h        ; 将 H 的值加载到 A
-  sbc 0          ; A = H - 借位
-  ld h, a 
-  ld a,[hl]
-  cp 13
-  call z, rightdowncao
-  ;检测是否在左下角
-  ;hl+6
-  ld a,6
-  add l
-  ld l,a
-  adc h
-  sub l
-  ld h,a
-  ld a,[hl]
-  cp 13
-  call z, leftdowncao
-  ret
-
-rightdowncao:;bit 0
-  ld a,%00000001
-  ld [positionincaocao],a
-  ret
-
-leftdowncao:;bit 1
-  ld a,%00000010
-  ld [positionincaocao],a
-  ret
-
-rightupcao:
-  ld a,%00000100;bit 2
-  ld [positionincaocao],a
   ret
 
 leftupcao:
-  ld a,%00001000;bit 3
+  ld a,2;是左上角设置为2
   ld [positionincaocao],a
   ld [hl],39;更改为其他(改C)右下角
 
@@ -186,15 +150,275 @@ leftupcao:
   ld [hl],39;更改为其他(改C)右上角
   ret
 
+caocaomove:
+  call returnstate0
+  ld a,1
+  ld [positionincaocao],a
+  ld hl,current2
+  bit 5, [hl]  ; check if left was pressed
+  call nz, caocaoGoLeft
+  ld hl,current2
+  bit 4, [hl]  ; check if right was pressed
+  ;call nz, caocaoGoRight
+  ld hl,current2
+  bit 6, [hl]  ; check if up was pressed
+  ;call nz, caocaoGoUp
+  ld hl,current2
+  bit 7, [hl]  ; check if down was pressed
+  ;call nz, caocaoGoDown
+  ret
+
+caocaoGoLeft:
+  ;先把原位置的caocao改回来
+  ld a,[ShadowOAM];y
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  inc hl
+  inc hl
+  inc hl
+  ld [hl],13;caocao(右上角)
+  ;hl+32*3
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],13;caocao(右下角)
+  dec hl
+  dec hl
+  dec hl
+  ld [hl],13;caocao(左下角)
+  
+  ;检测左上角的obj
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+24;fist 8 must sub ,24 check left 
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+16;fist 8 must sub ,16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+
+  ;检测左下角的obj
+  ld a,[ShadowOAM];y：-16+24
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+24;fist 8 must sub ,24 check left 
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+16;fist 8 must sub ,16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+  
+  ;not wall
+
+  call .updatecaocaobackground;用的是左下角的hl
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+  ret
+.updatecaocaobackground:;(y,x)
+  
+  inc hl
+  ld [hl],0;(4,0)
+  dec hl
+  ld [hl],0;(4,-1)
+  dec hl
+  ld [hl],13;(4,-2)
+  dec hl
+  ld [hl],7;(4,-3)左边
+  ;hl+5
+  ld a,5
+  add l
+  ld l,a
+  ld [hl],8;(4,2)right egde
+  inc hl
+  inc hl
+  ld [hl],0;(4,4)
+  inc hl
+  ld [hl],0;(4,5)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],0;(5,5)
+  dec hl
+  ld [hl],0;(5,4)
+  dec hl
+  ld [hl],0;(5,3)
+  dec hl
+  ld [hl],6;(5,2) right down corner
+  dec hl
+  dec hl
+  ld [hl],10;(5,0)
+  dec hl
+  ld [hl],10;(5,-1)down egde
+  dec hl
+  ld [hl],10;(5,-2)
+  dec hl
+  ld [hl],4;(5,-3)left down corner
+
+  ;hl-64
+  ld a, l        ; 将 L 的值加载到 A
+  sub 64        
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],7;(3,-3)
+  inc hl
+  inc hl
+  inc hl
+  ld [hl],0;(3,0)
+  inc hl
+  inc hl
+  ld [hl],8;(3,2)
+  inc hl
+  inc hl
+  inc hl
+  ld [hl],0;(3,5)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32       
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(2,5)
+  dec hl
+  dec hl
+  dec hl
+  ld [hl],8;(2,2)
+  dec hl
+  dec hl
+  ld [hl],0;(2,0)
+  dec hl
+  dec hl
+  dec hl
+  ld [hl],7;(2,-3)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32       
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],7;(1,-3)
+  inc hl
+  ld [hl],13;(1,-2)
+  inc hl
+  inc hl
+  ld [hl],0;(1,0)
+  inc hl
+  inc hl
+  ld [hl],8;(1,2)
+  inc hl
+  inc hl
+  ld [hl],0;(1,4)
+  inc hl
+  ld [hl],0;(1,5)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32       
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(0,5)
+  dec hl
+  ld [hl],0;(0,4)
+  dec hl
+  ld [hl],0;(0,3)
+  dec hl
+  ld [hl],5;(0,2)
+  dec hl
+  dec hl
+  ld [hl],9;(0,0)up egde
+  dec hl
+  ld [hl],9;(0,-1)
+  dec hl
+  ld [hl],9;(0,-2)
+  dec hl
+  ld [hl],3;(0,-3)left up corner
+
+
+  ret
 
 
 
-
-
-
-
-
-bingisselect:;secend-----------------------------------------------
+bingisselect:;secend-----------------------------------------------bing
   ld a,12
   ld [currenttile],a;save bing tile
   ld a,[currentpixel]
@@ -437,7 +661,7 @@ bingGoRight:
   dec hl
   ld [hl],0;(2,0)
 
-  ;hl-32
+  ;hl-64
   ld a, l        ; 将 L 的值加载到 A
   sub 64         ; A = L - 64
   ld l, a        ; 将结果存回 L
@@ -499,9 +723,9 @@ bingGoRight:
 checkselect2:
   ld a,[currenttile]
   cp 12;B
-  jp z, bingmove ;third
+  call z, bingmove ;third
   cp 13;C
-  ;jp z, caocaomove
+  call z, caocaomove
 
   ret
 
@@ -1270,12 +1494,12 @@ TilesEnd:
 SECTION "Background", ROM0
 Background:
 DB 01,01,01,01,01,01,01,01,01,01,01,01,01,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,04,10,06,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,00,00,00,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,00,00,00,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,00,00,00,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,00,00,00,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,00,00,00,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,00,00,00,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,36,08,07,35,00,00,35,08,07,23,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,00,08,04,10,10,10,10,06,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
