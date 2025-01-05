@@ -185,7 +185,7 @@ machaoGoLeft:
   ld [hl],23;machao(下方)
   
   
-  ;检测左上角的obj
+  ;检测上面的obj
   ld a,[ShadowOAM];y
   sub 16;fist 16 must sub ,get y in the background
   ld c,a
@@ -219,8 +219,159 @@ machaoGoLeft:
   ld a,[hl];                     left position
   cp 1;wall
 
+  ;检测下方的obj
+  ld a,[ShadowOAM];y：-16+24
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+24;fist 8 must sub ,24 check left 
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+16;fist 8 must sub ,16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+  
+  ;not wall
+  call .updatemacachaobackground;用的是下方的hl
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+  ret
+
+.updatemacachaobackground:;(y,x)
+  dec hl
+  ld [hl],23;(4,-2)
+  dec hl
+  ld [hl],7;(4,-3)左边
+  inc hl
+  inc hl
+  ld [hl],8;(4,-1)右边
+  inc hl
+  ld [hl],0;(4,0)
+  inc hl
+  ld [hl],0;(4,1)
+  inc hl
+  ld [hl],0;(4,2)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld [hl],0;(5,2)
+  dec hl
+  ld [hl],0;(5,1)
+  dec hl
+  ld [hl],0;(5,0)
+  dec hl
+  ld [hl],6;(5,-1)right down corner
+  dec hl
+  ld [hl],10;(5,-2)down egde
+  dec hl
+  ld [hl],4;(5,-3)left down corner
+
+  ;hl-64
+  ld a, l        ; 将 L 的值加载到 A
+  sub 64       
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],7;(3,-3)
+  inc hl
+  inc hl
+  ld [hl],8;(3,-1)right egde
+  inc hl
+  ld [hl],0;(3,0)
+  inc hl
+  inc hl
+  ld [hl],0;(3,2)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32      
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],0;(2,2)
+  dec hl
+  dec hl
+  ld [hl],0;(2,0)
+  dec hl
+  ld [hl],8;(2,-1)
+  dec hl
+  dec hl
+  ld [hl],7;(2,-3)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32      
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],7;(1,-3)
+  inc hl
+  ld [hl],23;(1,-2)
+  inc hl
+  ld [hl],8;(1,-1)
+  inc hl
+  ld [hl],0;(1,0)
+  inc hl
+  ld [hl],0;(1,1)
+  inc hl
+  ld [hl],0;(1,2)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32      
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],0;(0,2)
+  dec hl
+  ld [hl],0;(0,1)
+  dec hl
+  ld [hl],0;(0,0)
+  dec hl
+  ld [hl],5;(0,-1)right up corner
+  dec hl
+  ld [hl],9;(0,-2)up egde
+  dec hl
+  ld [hl],3;(0,-3)left up corner
 
 
+  ret
 
 
 caocaosselect:;会被多次调用-------------------------------------caocao
