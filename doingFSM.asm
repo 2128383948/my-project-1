@@ -166,7 +166,7 @@ bingmove:;third
   call nz, bingGoLeft
   ld hl,current2
   bit 4, [hl]  ; check if right was pressed
-  ;call nz, bingGoRight
+  call nz, bingGoRight
   ld hl,current2
   bit 6, [hl]  ; check if up was pressed
   ;call nz, bingGoUp
@@ -296,7 +296,126 @@ bingGoLeft:
 
 
 
+bingGoRight:
+  ;先把原位置的bing改回来
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub ,
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  ld [hl],12;bing
 
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 24;24 check right
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 16;16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+;not wall
+
+  call .updatebingbackground
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  add 24
+  ld [hl],a
+
+  ret
+.updatebingbackground:
+  dec hl
+  dec hl
+  ld [hl],0;坐上角(0,0),这是(1,1)
+  dec hl
+  ld [hl],0;(1,0)
+  inc hl
+  inc hl
+  ld [hl],0;(1,2)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld [hl],0;(2,2)
+  dec hl
+  ld [hl],0;(2,1)
+  dec hl
+  ld [hl],0;(2,0)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 64         ; A = L - 64
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(0,0)
+  inc hl
+  ld [hl],0;(0,1)
+  inc hl
+  ld [hl],0;(0,2)
+
+  inc hl
+  inc hl
+  inc hl;right
+  ld [hl],5
+  dec hl
+  ld [hl],9
+  dec hl
+  ld [hl],3
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],7;(2,2)
+  inc hl
+  ld [hl],12;(2,1)
+  inc hl
+  ld [hl],8;(2,0)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],6;(3,2)
+  dec hl
+  ld [hl],10;(3,1)
+  dec hl
+  ld [hl],4;(3,0)
+
+  ret
 
 
 
@@ -309,7 +428,7 @@ checkselect2:
   cp 12;B
   jp z, bingmove ;third
   cp 13;C
-  jp z, caocaomove
+  ;jp z, caocaomove
 
   ret
 
