@@ -41,12 +41,11 @@ EntryPoint:
 MainLoop:;--------------------------------------------------------------------------------
   call readKeys
   call MaybeReset  ;check if A was pressed not yet
-  ;call selectobjchangedirection
+  
   
   call updateFSM;new
 
-  ;call selectobjwaspressed
-  ;call selectobjchangedirection;new
+
   call WaitVBlank
   call CopyShadowOAMtoOAM
   jp MainLoop
@@ -94,11 +93,11 @@ caocaosselect:
   ld h,a
   ld a,[currentpixel+1]
   ld l,a
-  ld [hl],39;更改为其他
+  ld [hl],39;更改为其他(改C)
 
   call findpositionincao
   ld hl,ShadowOAM+2
-  ld [hl],38;change selectobject
+  ld [hl],38;change selectobject（改obj）
   ret
 
 findpositionincao:;检测对角是否为C 4 possible
@@ -124,17 +123,67 @@ findpositionincao:;检测对角是否为C 4 possible
   ld a,[hl]
   cp 13
   call z, rightupcao
+  ;检测是否在右下角
+  ;hl-32*6
+  ld a, l        ; 将 L 的值加载到 A
+  sub 192
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a 
+  ld a,[hl]
+  cp 13
+  call z, rightdowncao
   ;检测是否在左下角
-  ;hl-64
+  ;hl+6
+  ld a,6
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld a,[hl]
+  cp 13
+  call z, leftdowncao
+  ret
+
+rightdowncao:;bit 0
+  ld a,%00000001
+  ld [positionincaocao],a
+  ret
+
+leftdowncao:;bit 1
+  ld a,%00000010
+  ld [positionincaocao],a
+  ret
 
 rightupcao:
-  ld a,%00000100
+  ld a,%00000100;bit 2
   ld [positionincaocao],a
   ret
 
 leftupcao:
-  ld a,%00001000
+  ld a,%00001000;bit 3
   ld [positionincaocao],a
+  ld [hl],39;更改为其他(改C)右下角
+
+  ;hl-3左下角
+  ld a, l        ; 将 L 的值加载到 A
+  sub 3
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a 
+  ld [hl],39;更改为其他(改C)左下角
+
+  ;hl-32*3+3右上角
+  ld a, l        ; 将 L 的值加载到 A
+  sub 93
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a 
+  ld [hl],39;更改为其他(改C)右上角
   ret
 
 
@@ -309,7 +358,7 @@ checkselect2:
   cp 12;B
   jp z, bingmove ;third
   cp 13;C
-  jp z, caocaomove
+  ;jp z, caocaomove
 
   ret
 
