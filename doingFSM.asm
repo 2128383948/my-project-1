@@ -442,10 +442,10 @@ bingmove:;third
   call nz, bingGoRight
   ld hl,current2
   bit 6, [hl]  ; check if up was pressed
-  ;call nz, bingGoUp
+  call nz, bingGoUp
   ld hl,current2
   bit 7, [hl]  ; check if down was pressed
-  ;call nz, bingGoDown
+  call nz, bingGoDown
   ret
 
 bingGoLeft:
@@ -520,6 +520,7 @@ bingGoLeft:
   adc h
   sub l
   ld h,a
+
   ld [hl],0;(2,2)
   dec hl
   ld [hl],0;(2,1)
@@ -715,7 +716,302 @@ bingGoRight:
   ret
 
 
+bingGoUp:
+  ;先把原位置的bing改回来
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub ,
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  ld [hl],12;bing
 
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  sub 24;24 check up
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  sub 16;16 check up wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+;not wall
+
+  call .updatebingbackground
+  ld hl,ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+
+  ret
+.updatebingbackground:
+  ;hl+64
+  ld a,64
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],0;坐上角(0,0),这是(1,1)
+  dec hl
+  ld [hl],0;(1,0)
+  inc hl
+  inc hl
+  ld [hl],0;(1,2)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],0;(2,2)
+  dec hl
+  ld [hl],0;(2,1)
+  dec hl
+  ld [hl],0;(2,0)
+
+  ;hl-64
+  ld a, l        ; 将 L 的值加载到 A
+  sub 64         ; A = L - 64
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(0,0)
+  inc hl
+  ld [hl],0;(0,1)
+  inc hl
+  ld [hl],0;(0,2)
+
+  ;hl-96
+  ld a, l        ; 将 L 的值加载到 A
+  sub 96         ; A = L - 96
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ;up
+  ld [hl],5
+  dec hl
+  ld [hl],9
+  dec hl
+  ld [hl],3
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],7;(2,2)
+  inc hl
+  ld [hl],12;(2,1)
+  inc hl
+  ld [hl],8;(2,0)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],6;(3,2)
+  dec hl
+  ld [hl],10;(3,1)
+  dec hl
+  ld [hl],4;(3,0)
+
+  ret
+
+
+bingGoDown:
+  ;先把原位置的bing改回来
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub ,
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  ld [hl],12;bing
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  add 24;24 check down
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  add 16;16 check down wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 16;16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+  cp 2;full
+  ret z;if is full ,return
+
+;not wall
+
+  call .updatebingbackground
+  ld hl,ShadowOAM
+  ld a,[hl]
+  add 24
+  ld [hl],a
+
+  ret
+.updatebingbackground:
+  dec hl
+  dec hl
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32         ; A = L - 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;坐上角(0,0),这是(2,1)
+  dec hl
+  ld [hl],0;(2,0)
+  inc hl
+  inc hl
+  ld [hl],0;(2,2)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32         ; A = L - 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(1,2)
+  dec hl
+  ld [hl],0;(1,1)
+  dec hl
+  ld [hl],0;(1,0)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32         ; A = L - 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(0,0)
+  inc hl
+  ld [hl],0;(0,1)
+  inc hl
+  ld [hl],0;(0,2)
+
+  ;hl+96
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ;down
+  ld [hl],5
+  dec hl
+  ld [hl],9
+  dec hl
+  ld [hl],3
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],7;(2,2)
+  inc hl
+  ld [hl],12;(2,1)
+  inc hl
+  ld [hl],8;(2,0)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],6;(3,2)
+  dec hl
+  ld [hl],10;(3,1)
+  dec hl
+  ld [hl],4;(3,0)
+
+  ret
 
 
 
