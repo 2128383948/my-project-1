@@ -42,6 +42,11 @@ EntryPoint:
 ;初始化变量
   ld a,1;初始化为1,
   ld [positionincaocao],a
+  ld [positioninzhangfei],a
+  ld [positioninhuangzhong],a
+  ld [positioninmachao],a
+  ld [positioninguanyu],a
+  ld [positioninzhaoyun],a
 
 MainLoop:;--------------------------------------------------------------------------------
   call readKeys
@@ -89,7 +94,134 @@ checkselect:
   call z, bingisselect
   cp 13;C
   call z, caocaosselect
+  cp 16;zhangfei
+  ;call z, zhangfeiselect
+  cp 18;huangzhong
+  ;call z, huangzhongselect
+  cp 23;machao
+  call z, machaoselect
+  cp 35;guanyu
+  ;call z, guanyuselect
+  cp 36;zhaoyun
+  ;call z, zhaoyunselect
   ret
+
+
+machaoselect:
+  ld a,23
+  ld [currenttile],a;save machao tile
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+  call findpositioninmachao;if is 左上角，改图
+  ld a,[positioninmachao];在move后改回1
+  cp 1
+  jr z ,notcahngemachao;not 左上角 不改图
+  
+  ;ld [hl],39;更改为其他(改C)
+  ld hl,ShadowOAM+2
+  ld [hl],38;change selectobject（改obj）
+  ret
+notcahngemachao:
+  call returnstate0
+  ret
+
+
+findpositioninmachao:;检测下面是否为M
+  ;检测是否在上面，检测下方
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld a,[hl]
+  cp 23
+  call z, upmachao
+  ret
+
+upmachao:
+  ld a,2;是左上角设置为2
+  ld [positioninmachao],a
+  ld [hl],39;更改为其他(改M)下方
+  ret
+
+machaomove:
+  call returnstate0
+  ld a,1
+  ld [positioninmachao],a
+  ld hl,current2
+  bit 5, [hl]  ; check if left was pressed
+  call nz, machaoGoLeft
+  ld hl,current2
+  bit 4, [hl]  ; check if right was pressed
+  ;call nz, machaoGoRight
+  ld hl,current2
+  bit 6, [hl]  ; check if up was pressed
+  ;call nz, machaoGoUp
+  ld hl,current2
+  bit 7, [hl]  ; check if down was pressed
+  ;call nz, machaoGoDown
+  ret
+
+machaoGoLeft:
+  ;先把原位置的machao改回来
+  ld a,[ShadowOAM];y
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  ;hl+32*3
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld [hl],23;machao(下方)
+  
+  
+  ;检测左上角的obj
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+24;fist 8 must sub ,24 check left 
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+16;fist 8 must sub ,16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+
+
+
+
 
 caocaosselect:;会被多次调用-------------------------------------caocao
   ld a,13
@@ -885,15 +1017,15 @@ bingGoRight:
   ret z;if is bing ,return
   cp 13;caocao
   ret z;if is caocao ,return
-  cp 16;zhangfei
+  cp 16;zhangfei F
   ret z;if is zhangfei ,return
-  cp 18;huangzhong
+  cp 18;huangzhong H
   ret z;if is huangzhong ,return
-  cp 23;machao
+  cp 23;machao M
   ret z;if is machao ,return
-  cp 35;guanyu
+  cp 35;guanyu Y
   ret z;if is guanyu ,return
-  cp 36;zhaoyun
+  cp 36;zhaoyun Z
   ret z;if is zhaoyun ,return
 
   ld a,[ShadowOAM];y
@@ -992,6 +1124,7 @@ bingGoRight:
   ld [hl],4;(3,0)
 
   ret
+
 
 
 bingGoUp:
@@ -1300,7 +1433,16 @@ checkselect2:
   call z, bingmove ;third
   cp 13;C
   call z, caocaomove
-
+  cp 16;F zhangfei
+  ;call z, zhangfeimove
+  cp 18;H huangzhong
+  ;call z, huangzhongmove
+  cp 23;M machao
+  call z, machaomove
+  cp 35;Y guanyu
+  ;call z, guanyumove
+  cp 36;Z zhaoyun
+  ;call z, zhaoyunmove
   ret
 
 
@@ -2068,12 +2210,12 @@ TilesEnd:
 SECTION "Background", ROM0
 Background:
 DB 01,01,01,01,01,01,01,01,01,01,01,01,01,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,00,00,00,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,00,00,00,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,00,00,00,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,00,00,00,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,00,00,00,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,00,00,00,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,04,10,06,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,36,08,07,35,00,00,35,08,07,23,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,00,08,04,10,10,10,10,06,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
@@ -2091,7 +2233,13 @@ SECTION "Variables", WRAM0
 ShadowOAM: DS 160 
 previous: DS 1
 current: DS 1
-positionincaocao: DS 1;4 position %00001000 左上角 %0100 右上角 %0010 左下角 %0001 右下角
+
+positioninmachao: DS 1;
+positionincaocao: DS 1;
+positioninzhangfei: DS 1;
+positioninhuangzhong: DS 1;
+positioninguanyu: DS 1;
+positioninzhaoyun: DS 1;
 fsmState: DS 1
 current2: DS 1
 currentpixel: DS 2
