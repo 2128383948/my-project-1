@@ -197,6 +197,18 @@ bingGoLeft:
   ld a,[hl];                     left position
   cp 12;bing
   ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
 
   ld a,[ShadowOAM];y
   sub 16;fist 16 must sub ,get y in the background
@@ -319,6 +331,18 @@ bingGoRight:
   ld a,[hl];                     left position
   cp 12;bing
   ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
 
   ld a,[ShadowOAM];y
   sub 16;fist 16 must sub ,get y in the background
