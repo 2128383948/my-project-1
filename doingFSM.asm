@@ -56,11 +56,11 @@ SECTION "Functions", ROM0;------------------------------------------------------
 
 
 selectobjwaspressed:
-  ;ld hl,current
-  ;bit 2, [hl]  ; check if select was pressed
+  
+  
   ld a,1
   ld [fsmState],a
-  ;call nz, checkselect
+  
   ret
 
 checkselect:
@@ -73,7 +73,7 @@ checkselect:
   ld b,a
   call GetTileByPixel
   ld a,h
-  ld [currentpixel],a
+  ld [currentpixel],a;save current tile position in the background
   ld a,l
   ld [currentpixel+1],a
   ld a,[hl]
@@ -84,10 +84,68 @@ checkselect:
   cp 12;B
   jp z, bingisselect
   cp 13;C
-  ;jp z, .caocaosselect
+  jp z, caocaosselect
   ret
 
-bingisselect:
+caocaosselect:
+  ld a,13
+  ld [currenttile],a;save caocao tile
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+  ld [hl],39;更改为其他
+
+  call findpositionincao
+  ld hl,ShadowOAM+2
+  ld [hl],38;change selectobject
+  ret
+
+findpositionincao:;检测对角是否为C 4 possible
+  ;检测是否在左上角
+  ;hl+32*3+3检测右下角 下三行
+  ld a,99
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld a,[hl]
+  cp 13
+  call z, leftupcao
+  ;检测是否在右上角
+  ;hl-35+32-3
+  ld a, l        ; 将 L 的值加载到 A
+  sub 6
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a 
+  ld a,[hl]
+  cp 13
+  call z, rightupcao
+  ;检测是否在左下角
+  ;hl-64
+
+rightupcao:
+  ld a,%00000100
+  ld [positionincaocao],a
+  ret
+
+leftupcao:
+  ld a,%00001000
+  ld [positionincaocao],a
+  ret
+
+
+
+
+
+
+
+
+
+bingisselect:;secend-----------------------------------------------
   ld a,12
   ld [currenttile],a;save bing tile
   ld a,[currentpixel]
@@ -95,18 +153,13 @@ bingisselect:
   ld a,[currentpixel+1]
   ld l,a
   ld [hl],39;更改为其他
-  ;ld b,h
-  ;ld c,l;save hl to bc
-  
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject
 ;改颜色
 
-  ;call bingmove
-
   ret
 
-bingmove:
+bingmove:;third
   call returnstate0
   ld hl,current2
   bit 5, [hl]  ; check if left was pressed
@@ -250,13 +303,14 @@ bingGoLeft:
 
 
 
-
+;------------------------------------------------------------
 checkselect2:
   ld a,[currenttile]
   cp 12;B
-  jp z, bingmove
+  jp z, bingmove ;third
   cp 13;C
-  
+  jp z, caocaomove
+
   ret
 
 
@@ -424,24 +478,8 @@ state1:; in select
 
   ld a,[forcheckselect]
   cp 1
-  call z, checkselect
+  call z, checkselect;first
 
-  ret
-  ;test
-  ;ld hl,current2
-  ;bit 5, [hl]  ; check if left was pressed
-  ;call nz, test1
-  ;bit 4, [hl]  ; check if right was pressed
-  ;call nz, test2
-
-
-test1:
-  ld hl,ShadowOAM+2
-  ld [hl],37
-  ret
-test2:
-  ld hl,ShadowOAM+2
-  ld [hl],36
   ret
 
 returnstate0:
@@ -454,7 +492,7 @@ returnstate0:
 willGo:
   ld a,[current]
   ld [current2],a
-  call checkselect2
+  call checkselect2 ;second
   ld a,2
   ld [forcheckselect],a
   ret
@@ -685,12 +723,12 @@ Tiles:
   dw `00000000
 ; wall 1
   dw `33333333
-  dw `33322233
-  dw `33322233
-  dw `33322233
-  dw `33322233
-  dw `33322233
-  dw `33322233
+  dw `33222233
+  dw `33222233
+  dw `33222233
+  dw `33222233
+  dw `33222233
+  dw `33222233
   dw `33333333
 ; full 2
   dw `33333333
@@ -1063,7 +1101,7 @@ SECTION "Variables", WRAM0
 ShadowOAM: DS 160 
 previous: DS 1
 current: DS 1
-caocao: DS 20
+positionincaocao: DS 1;4 position %00001000 左上角 %0100 右上角 %0010 左下角 %0001 右下角
 fsmState: DS 1
 current2: DS 1
 currentpixel: DS 2
