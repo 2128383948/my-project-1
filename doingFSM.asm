@@ -107,7 +107,7 @@ checkselect:
   ret
 
 
-machaoselect:
+machaoselect:;-----------------------------------------------machao have porblem!!!!!!!!!!!
   ld a,23
   ld [currenttile],a;save machao tile
   ld a,[currentpixel]
@@ -185,7 +185,7 @@ machaoGoLeft:
   ld [hl],23;machao(下方)
   
   
-  ;检测左上角的obj
+  ;检测上面的obj
   ld a,[ShadowOAM];y
   sub 16;fist 16 must sub ,get y in the background
   ld c,a
@@ -218,9 +218,161 @@ machaoGoLeft:
   call GetTileByPixel
   ld a,[hl];                     left position
   cp 1;wall
+  ret z;if is wall ,return
+  
+  ;检测下方的obj
+  ld a,[ShadowOAM];y：-16+24
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+24;fist 8 must sub ,24 check left 
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8+16;fist 8 must sub ,16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+  
+  ;not wall
+  call .updatemacachaobackground;用的是下方的hl
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+  ret
+
+.updatemacachaobackground:;(y,x)
+  dec hl
+  ld [hl],23;(4,-2)
+  dec hl
+  ld [hl],7;(4,-3)左边
+  inc hl
+  inc hl
+  ld [hl],8;(4,-1)右边
+  inc hl
+  ld [hl],0;(4,0)
+  inc hl
+  ld [hl],0;(4,1)
+  inc hl
+  ld [hl],0;(4,2)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+  ld [hl],0;(5,2)
+  dec hl
+  ld [hl],0;(5,1)
+  dec hl
+  ld [hl],0;(5,0)
+  dec hl
+  ld [hl],6;(5,-1)right down corner
+  dec hl
+  ld [hl],10;(5,-2)down egde
+  dec hl
+  ld [hl],4;(5,-3)left down corner
+
+  ;hl-64
+  ld a, l        ; 将 L 的值加载到 A
+  sub 64       
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],7;(3,-3)
+  inc hl
+  inc hl
+  ld [hl],8;(3,-1)right egde
+  inc hl
+  ld [hl],0;(3,0)
+  inc hl
+  inc hl
+  ld [hl],0;(3,2)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32      
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],0;(2,2)
+  dec hl
+  dec hl
+  ld [hl],0;(2,0)
+  dec hl
+  ld [hl],8;(2,-1)
+  dec hl
+  dec hl
+  ld [hl],7;(2,-3)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32      
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],7;(1,-3)
+  inc hl
+  ld [hl],23;(1,-2)
+  inc hl
+  ld [hl],8;(1,-1)
+  inc hl
+  ld [hl],0;(1,0)
+  inc hl
+  ld [hl],0;(1,1)
+  inc hl
+  ld [hl],0;(1,2)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32      
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+  ld [hl],0;(0,2)
+  dec hl
+  ld [hl],0;(0,1)
+  dec hl
+  ld [hl],0;(0,0)
+  dec hl
+  ld [hl],5;(0,-1)right up corner
+  dec hl
+  ld [hl],9;(0,-2)up egde
+  dec hl
+  ld [hl],3;(0,-3)left up corner
 
 
-
+  ret
 
 
 caocaosselect:;会被多次调用-------------------------------------caocao
@@ -547,6 +699,889 @@ caocaoGoLeft:
 
 
   ret
+
+caocaoGoRight:
+  ;先把原位置的caocao改回来
+  ld a,[ShadowOAM];y
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  inc hl
+  inc hl
+  inc hl
+  ld [hl],13;caocao(右上角)
+  ;hl+32*3
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],13;caocao(右下角)
+  dec hl
+  dec hl
+  dec hl
+  ld [hl],13;caocao(左下角)
+
+  ;检测右上角的obj
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 48;48 check right
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 40;40 check right wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+
+  ;检测右下角的obj
+  ld a,[ShadowOAM];y：-16+24
+  sub 16;sub 16;fist 16 must sub ,get y in the background
+  add 24;d-r
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 48;48 check left
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;sub 16;fist 16 must sub ,get y in the background
+  add 24;d-r
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 40;48 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+  ;not wall
+
+  call .updatecaocaobackground;用的是左下角的hl
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  add 24
+  ld [hl],a
+  ret
+.updatecaocaobackground:;(y,x)
+
+  inc hl
+  inc hl
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],6;(5,8) right down corner
+  dec hl
+  ld [hl],10;(5,7) down egde
+  dec hl
+  ld[hl],10;(5,6)
+  dec hl
+  ld[hl],10;(5,5)
+  dec hl
+  ld[hl],10;(5,4)
+  dec hl
+  ld[hl],4;(5,3) left down corner
+  dec hl
+  ld[hl],0;(5,2)
+  dec hl
+  ld[hl],0;(5,1)
+  dec hl
+  ld[hl],0;(5,0)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(4,0)
+  inc hl
+  ld [hl],0;(4,1)
+  inc hl
+  ld [hl],0;(4,2)
+  inc hl
+  ld [hl],7;(4,3) left edge
+  inc hl
+  ld [hl],13;(4,4) C
+  inc hl
+  ld [hl],0;(4,5)
+  inc hl
+  ld [hl],0;(4,6)
+  inc hl
+  ld [hl],13;(4,7)
+  inc hl
+  ld [hl],8;(4,8) right edge
+
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],8;(3,8) right edge
+  dec hl
+  ld [hl],0;(3,7)
+  dec hl
+  ld[hl],0;(3,6)
+  dec hl
+  ld[hl],0;(3,5)
+  dec hl
+  ld[hl],0;(3,4)
+  dec hl
+  ld[hl],7;(3,3) left edge
+  dec hl
+  ld[hl],0;(3,2)
+  dec hl
+  ld[hl],0;(3,1)
+  dec hl
+  ld[hl],0;(3,0)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(2,0)
+  inc hl
+  ld [hl],0;(2,1)
+  inc hl
+  ld [hl],0;(2,2)
+  inc hl
+  ld [hl],7;(2,3) left edge
+  inc hl
+  ld [hl],0;(2,4)
+  inc hl
+  ld [hl],0;(2,5)
+  inc hl
+  ld [hl],0;(2,6)
+  inc hl
+  ld [hl],0;(2,7)
+  inc hl
+  ld [hl],8;(2,8) right edge
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],8;(1,8) right edge
+  dec hl
+  ld [hl],13;(1,7) C
+  dec hl
+  ld[hl],0;(1,6)
+  dec hl
+  ld[hl],0;(1,5)
+  dec hl
+  ld[hl],13;(1,4) C
+  dec hl
+  ld[hl],7;(1,3) left edge
+  dec hl
+  ld[hl],0;(1,2)
+  dec hl
+  ld[hl],0;(1,1)
+  dec hl
+  ld[hl],0;(1,0)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(0,0)
+  inc hl
+  ld [hl],0;(0,1)
+  inc hl
+  ld [hl],0;(0,2)
+  inc hl
+  ld [hl],3;(0,3) left up corner
+  inc hl
+  ld [hl],9;(0,4) up edge
+  inc hl
+  ld [hl],9;(0,5)
+  inc hl
+  ld [hl],9;(0,6)
+  inc hl
+  ld [hl],9;(0,7)
+  inc hl
+  ld [hl],5;(0,8) right up corner
+
+  ret
+
+
+caocaoGoUp:
+  ;先把原位置的caocao改回来
+  ld a,[ShadowOAM];y
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  inc hl
+  inc hl
+  inc hl
+  ld [hl],13;caocao(右上角)
+  ;hl+32*3
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],13;caocao(右下角)
+  dec hl
+  dec hl
+  dec hl
+  ld [hl],13;caocao(左下角)
+
+  ;检测左上角的obj
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  sub 24; 24 check up
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  sub 16; 16 check up wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+
+  ;检测右上角的obj
+  ld a,[ShadowOAM];y：-16+24
+  sub 16;sub 16;fist 16 must sub ,get y in the background
+  sub 24;24 check up
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 24;u-r
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;sub 16;fist 16 must sub ,get y in the background
+  sub 16;16 check up wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 24;u-r
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+  ;not wall
+
+  call .updatecaocaobackground;用的是左下角的hl
+  ld hl,ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+  ret
+.updatecaocaobackground:;(y,x)
+
+  inc hl
+  ;hl-64
+  ld a, l        ; 将 L 的值加载到 A
+  sub 64
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],5;(-3,5) right up corner
+  dec hl
+  ld [hl],9;(-3,4) up egde
+  dec hl
+  ld [hl],9;(-3,3)
+  dec hl
+  ld [hl],9;(-3,2)
+  dec hl
+  ld [hl],9;(-3,1)
+  dec hl
+  ld [hl],3;(-3,0) left up corner
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+
+  ld [hl],7;(-2,0) left edge
+  inc hl
+  ld [hl],13;(-2,1) C
+  inc hl
+  ld [hl],0;(-2,2)
+  inc hl
+  ld [hl],0;(-2,3)
+  inc hl
+  ld [hl],13;(-2,4)
+  inc hl
+  ld [hl],8;(-2,5) right edge
+
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],8;(-1,5) right edge
+  dec hl
+  ld [hl],0;(-1,4)
+  dec hl
+  ld [hl],0;(-1,3)
+  dec hl
+  ld [hl],0;(-1,2)
+  dec hl
+  ld [hl],0;(-1,1)
+  dec hl
+  ld [hl],7;(-1,0) left edge
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],7;(0,0) left edge
+  inc hl
+  ld [hl],0;(0,1)
+  inc hl
+  ld [hl],0;(0,2)
+  inc hl
+  ld [hl],0;(0,3)
+  inc hl
+  ld [hl],0;(0,4)
+  inc hl
+  ld [hl],8;(0,5) right edge
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],8;(1,5) right edge
+  dec hl
+  ld [hl],13;(1,4) C
+  dec hl
+  ld [hl],0;(1,3)
+  dec hl
+  ld [hl],0;(1,2)
+  dec hl
+  ld [hl],13;(1,1) C
+  dec hl
+  ld [hl],7;(1,0) left edge
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],4;(2,0) left down corner
+  inc hl
+  ld [hl],10;(2,1) down edge
+  inc hl
+  ld [hl],10;(2,2)
+  inc hl
+  ld [hl],10;(2,3)
+  inc hl
+  ld [hl],10;(2,4)
+  inc hl
+  ld [hl],6;(2,5) right down corner
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],0;(3,5)
+  dec hl
+  ld [hl],0;(3,4)
+  dec hl
+  ld [hl],0;(3,3)
+  dec hl
+  ld [hl],0;(3,2)
+  dec hl
+  ld [hl],0;(3,1)
+  dec hl
+  ld [hl],0;(3,0)
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],0;(4,0) left up corner
+  inc hl
+  ld [hl],0;(4,1) up edge
+  inc hl
+  ld [hl],0;(4,2)
+  inc hl
+  ld [hl],0;(4,3)
+  inc hl
+  ld [hl],0;(4,4)
+  inc hl
+  ld [hl],0;(4,5) right up corner
+
+  ;hl+32
+  ld a,32
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],0;(5,5)
+  dec hl
+  ld [hl],0;(5,4)
+  dec hl
+  ld [hl],0;(5,3)
+  dec hl
+  ld [hl],0;(5,2)
+  dec hl
+  ld [hl],0;(5,1)
+  dec hl
+  ld [hl],0;(5,0)
+
+  ret
+
+
+
+
+caocaoGoDown:
+  ;先把原位置的caocao改回来
+  ld a,[ShadowOAM];y
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  inc hl
+  inc hl
+  inc hl
+  ld [hl],13;caocao(右上角)
+  ;hl+32*3
+  ld a,96
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],13;caocao(右下角)
+  dec hl
+  dec hl
+  dec hl
+  ld [hl],13;caocao(左下角)
+
+  ;检测左下角的obj
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  add 48; 48 check down
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  add 40; 40 check down wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+
+  ;检测右下角的obj
+  ld a,[ShadowOAM];y：-16+24
+  sub 16;sub 16;fist 16 must sub ,get y in the background
+  add 48;48 check down
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 24;d-r
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
+
+  ld a,[ShadowOAM];y
+  sub 16;sub 16;fist 16 must sub ,get y in the background
+  add 40;48 check down wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  add 24;d-r
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+
+  ;not wall
+
+  call .updatecaocaobackground;用的是左下角的hl
+  ld hl,ShadowOAM
+  ld a,[hl]
+  add 24
+  ld [hl],a
+  ret
+.updatecaocaobackground:;(y,x)
+
+  inc hl
+
+  ;hl+64
+  ld a,64
+  add l
+  ld l,a
+  adc h
+  sub l
+  ld h,a
+
+  ld [hl],6;(8,5) right down corner
+  dec hl
+  ld [hl],10;(8,4) down egde
+  dec hl
+  ld [hl],10;(8,3)
+  dec hl
+  ld [hl],10;(8,2)
+  dec hl
+  ld [hl],10;(8,1)
+  dec hl
+  ld [hl],4;(8,0) left down corner
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+
+  ld [hl],7;(7,0) left edge
+  inc hl
+  ld [hl],13;(7,1) C
+  inc hl
+  ld [hl],0;(7,2)
+  inc hl
+  ld [hl],0;(7,3)
+  inc hl
+  ld [hl],13;(7,4)
+  inc hl
+  ld [hl],8;(7,5) right edge
+
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],8;(6,5) right edge
+  dec hl
+  ld [hl],0;(6,4)
+  dec hl
+  ld [hl],0;(6,3)
+  dec hl
+  ld [hl],0;(6,2)
+  dec hl
+  ld [hl],0;(6,1)
+  dec hl
+  ld [hl],7;(6,0) left edge
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],7;(5,0) left edge
+  inc hl
+  ld [hl],0;(5,1)
+  inc hl
+  ld [hl],0;(5,2)
+  inc hl
+  ld [hl],0;(5,3)
+  inc hl
+  ld [hl],0;(5,4)
+  inc hl
+  ld [hl],8;(5,5) right edge
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],8;(4,5) right edge
+  dec hl
+  ld [hl],13;(4,4) C
+  dec hl
+  ld [hl],0;(4,3)
+  dec hl
+  ld [hl],0;(4,2)
+  dec hl
+  ld [hl],13;(4,1) C
+  dec hl
+  ld [hl],7;(4,0) left edge
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],3;(3,0) left up corner
+  inc hl
+  ld [hl],9;(3,1) up edge
+  inc hl
+  ld [hl],9;(3,2)
+  inc hl
+  ld [hl],9;(3,3)
+  inc hl
+  ld [hl],9;(3,4)
+  inc hl
+  ld [hl],5;(3,5) right up corner
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(2,5)
+  dec hl
+  ld [hl],0;(2,4)
+  dec hl
+  ld [hl],0;(2,3)
+  dec hl
+  ld [hl],0;(2,2)
+  dec hl
+  ld [hl],0;(2,1)
+  dec hl
+  ld [hl],0;(2,0)
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(1,0) left up corner
+  inc hl
+  ld [hl],0;(1,1) up edge
+  inc hl
+  ld [hl],0;(1,2)
+  inc hl
+  ld [hl],0;(1,3)
+  inc hl
+  ld [hl],0;(1,4)
+  inc hl
+  ld [hl],0;(1,5) right up corner
+
+  ;hl-32
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld [hl],0;(0,5)
+  dec hl
+  ld [hl],0;(0,4)
+  dec hl
+  ld [hl],0;(0,3)
+  dec hl
+  ld [hl],0;(0,2)
+  dec hl
+  ld [hl],0;(0,1)
+  dec hl
+  ld [hl],0;(0,0)
+
+  ret
+
 
 
 caocaoGoRight:
