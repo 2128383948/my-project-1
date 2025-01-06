@@ -33,6 +33,10 @@ EntryPoint:
 
   ld a,0;new,init fsmState,0is normal,1 is select
   ld [fsmState],a
+  ld [counter],a
+  ld [buffer],a
+  ld [buffer+1],a
+  ld [buffer+2],a
 
 ; LCD on, enable object layer (no background)
   ld a, LCDCF_ON | LCDCF_OBJON | LCDCF_BGON | LCDCF_BG8000
@@ -78,9 +82,10 @@ Gamemainloop:
 
   call MaybeReset  ;check if A was pressed not yet
   call updateFSM;new
-
+  call binToDec
   call WaitVBlank
   call CopyShadowOAMtoOAM
+  call copyDigitsRev
   ret
 
 
@@ -233,6 +238,7 @@ guanyuGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updateguanyubackground:;(y,x)
@@ -367,6 +373,7 @@ guanyuGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updateguanyubackground:;(y,x)
@@ -553,6 +560,7 @@ guanyuGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updateguanyubackground:;(y,x)
@@ -780,6 +788,7 @@ guanyuGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updateguanyubackground:;(y,x)
@@ -1063,6 +1072,7 @@ zhangfeiGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatezhangfeibackground:;(y,x)
@@ -1279,6 +1289,7 @@ zhangfeiGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -1472,6 +1483,7 @@ zhangfeiGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -1672,6 +1684,7 @@ zhangfeiGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -1963,6 +1976,7 @@ huangzhongGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatehuangzhongbackground:;(y,x)
@@ -2179,6 +2193,7 @@ huangzhongGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -2372,6 +2387,7 @@ huangzhongGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -2572,6 +2588,7 @@ huangzhongGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -2863,6 +2880,7 @@ zhaoyunGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatezhaoyunbackground:;(y,x)
@@ -3079,6 +3097,7 @@ zhaoyunGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -3272,6 +3291,7 @@ zhaoyunGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -3472,6 +3492,7 @@ zhaoyunGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -3764,6 +3785,7 @@ machaoGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -3980,6 +4002,7 @@ machaoGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -4174,6 +4197,7 @@ machaoGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -4374,6 +4398,7 @@ machaoGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 
 .updatemacachaobackground:;(y,x)
@@ -4695,6 +4720,7 @@ caocaoGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 .updatecaocaobackground:;(y,x)
   
@@ -4947,6 +4973,7 @@ caocaoGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 .updatecaocaobackground:;(y,x)
 
@@ -5225,6 +5252,7 @@ caocaoGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
   ret
 .updatecaocaobackground:;(y,x)
 
@@ -5528,6 +5556,7 @@ caocaoGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
+  call IncrementCounter
   ret
 .updatecaocaobackground:;(y,x)
 
@@ -5804,6 +5833,7 @@ bingGoLeft:
   ld a,[hl]
   sub 24
   ld [hl],a
+  call IncrementCounter
 
   ret
 .updatebingbackground:
@@ -5940,7 +5970,7 @@ bingGoRight:
   ld a,[hl]
   add 24
   ld [hl],a
-
+  call IncrementCounter
   ret
 .updatebingbackground:
   dec hl
@@ -6075,7 +6105,7 @@ bingGoUp:
   ld a,[hl]
   sub 24
   ld [hl],a
-
+  call IncrementCounter
   ret
 .updatebingbackground:
   ;hl+64
@@ -6225,7 +6255,7 @@ bingGoDown:
   ld a,[hl]
   add 24
   ld [hl],a
-
+  call IncrementCounter
   ret
 .updatebingbackground:
   dec hl
@@ -6821,6 +6851,65 @@ InitializeObjects1:;pre
   inc      hl
   dec      b
   jr nz, .init
+  ret
+
+
+IncrementCounter:
+  ld a, [counter]
+  cp 255
+  jr z, .done
+  inc a
+  ld [counter], a
+.done
+  ret
+
+binToDec:
+  ld hl, buffer
+  ld a, [counter]
+  ld b, 10
+  ld c,0;divresult
+  call modulo
+  ld [hl], a;first
+  inc hl
+  ld a,c
+  ld c,0;divresult
+  ld b, 10
+  call modulo
+  ld [hl], a;secend
+  inc hl
+  ld a, c
+  ld c,0;divresult
+  ld b, 10
+  call modulo
+  ld [hl], a;third
+; TODO
+  ret
+
+modulo:;if a < b, then a is the remainder
+  cp b
+  jr c, .done
+  sub b
+  inc c
+  jr modulo
+.done:
+  ret
+
+copyDigitsRev:
+  ld hl, buffer
+  ld de, _SCRN0 + 19
+
+  ld a, [hl+]
+  add 40
+  ld [de], a
+  dec de
+  ld a, [hl+]
+  add 40
+  ld [de], a
+  dec de
+  ld a, [hl+]
+  add 40
+  ld [de], a
+; TODO
   ret
 ;not useful function///////////////////////////////////////////////
 
