@@ -3,7 +3,7 @@
 ; and background (just shows a border)
 
 INCLUDE "hardware.inc"
-;INCLUDE "data.inc"
+INCLUDE "data.inc"
 DEF OBJCOUNT EQU 2
 
 
@@ -23,7 +23,7 @@ EntryPoint:
   ld [rBGP],  a
 
   call   CopyTileDataToVRAM
-  call   CopyBGToVRAM
+  call   CopyTitleBGToVRAM
   ld     hl, _OAMRAM
   call   ResetOAM
   ld     hl, ShadowOAM
@@ -37,6 +37,7 @@ EntryPoint:
 ; LCD on, enable object layer (no background)
   ld a, LCDCF_ON | LCDCF_OBJON | LCDCF_BGON | LCDCF_BG8000
   ld [rLCDC], a
+  ld [gamestate],a
 
 
 ;初始化变量
@@ -49,18 +50,38 @@ EntryPoint:
   ld [positioninzhaoyun],a
 
 MainLoop:;--------------------------------------------------------------------------------
-  call readKeys
-  call MaybeReset  ;check if A was pressed not yet
-  
-  
-  call updateFSM;
+  ld a, [gamestate] 
+  cp 1
+  call nz,Titlemainloop
 
-
-  call WaitVBlank
-  call CopyShadowOAMtoOAM
+  Call Gamemainloop
   jp MainLoop
 
 SECTION "Functions", ROM0;------------------------------------------------------------
+
+Titlemainloop:
+  call UpdateGamestates
+  ld a, [gamestate]       ; 检查游戏状态
+  cp 1                    ; 如果是 1，则运行游戏主循环
+  jp z, betweenTitleandmap
+  jp nz,Titlemainloop
+
+betweenTitleandmap:
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAM
+  call EnableLCD
+  jp MainLoop
+
+Gamemainloop:
+  call readKeys
+
+  call MaybeReset  ;check if A was pressed not yet
+  call updateFSM;new
+
+  call WaitVBlank
+  call CopyShadowOAMtoOAM
+  ret
 
 
 
@@ -6147,15 +6168,15 @@ bingGoUp:
 
 bingGoDown:
  ;先把原位置的bing改回来
- ld a,[ShadowOAM];y
- sub 16;fist 16 must sub ,get y in the background
- ld c,a
- ld a,[ShadowOAM+1];x
- sub 8;fist 8 must sub ,
- ld b,a
- call GetTileByPixel
- ld a,[hl]
- ld [hl],12;bing
+  ld a,[ShadowOAM];y
+  sub 16;fist 16 must sub ,get y in the background
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub ,
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  ld [hl],12;bing
 
   ld a,[ShadowOAM];y
   ;sub 16;fist 16 must sub ,get y in the background
@@ -6424,9 +6445,17 @@ GoDown:
 
 MaybeReset:
   ld hl,current
-  bit 0, [hl]  ; check if A was pressed
+  bit 0, [hl] ; check if A was pressed
+  call nz, Resetpage1
   call nz, InitializeObjects 
   call nz, returnstate0
+  ret
+
+Resetpage1:
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAM
+  call EnableLCD
   ret
 
 ;y=16,x=8 is (0,0) in the screen
@@ -6656,10 +6685,12 @@ CopyMemory:
   ret
 
 CopyBGToVRAM:
+  call DisableLCD
   ld de, Background
   ld hl, $9800;_SCRN0
   ld bc, BackgroundEnd - Background
   call CopyMemory
+  call EnableLCD
   ret
 
 CopyTileDataToVRAM:
@@ -6669,6 +6700,72 @@ CopyTileDataToVRAM:
   call CopyMemory
   ret
 
+UpdateGamestates:
+    call readKeys
+    call Reset_start
+
+    ld hl,gamestate
+    bit 3,[hl]
+    ret z
+
+    call WaitVBlank
+    jp UpdateGamestates
+
+Reset_start:
+    ld hl,current
+    bit 3, [hl]  ; check if A was pressed
+    call nz, changestate 
+    ret
+
+changestate:
+    ld a,1
+    ld [gamestate],a
+    ret
+
+TitleScreenLoop:
+  call DisplayTitleScreen  ; 显示标题页面
+
+DisplayTitleScreen:
+  call ClearVRAM           ; 清空 VRAM
+  call CopyTitleBGToVRAM   ; 加载标题页面内容
+  ret
+
+
+;標題
+ClearVRAM:
+    ld hl, $9800         ; 起始地址：背景 Tile Map 的起始地址
+    ld bc, $0400         ; 计数器：1024 字节 (0x400)，32x32 Tile Map
+    xor a               ; 将 A 寄存器设置为 0x00（清除值）
+
+.clear_loop:
+    ld [hl], a          ; 将 A (0x00) 写入当前 HL 指向的地址
+    inc hl              ; HL 指向下一个字节
+    dec bc              ; 字节计数器 -1
+    ld a, b             ; 检查 BC 是否为 0
+    or c
+    jr nz, .clear_loop  ; 如果 BC 不为 0，继续循环
+
+    ret                 ; 完成，返回
+
+
+CopyTitleBGToVRAM:
+  ld de, TitleBackground
+  ld hl, $9800;_SCRN0
+  ld bc, TitleBackgroundEnd - TitleBackground
+  call CopyMemory
+  ret
+
+DisableLCD:
+    ld a, [rLCDC]
+    and %01111111            ; 清除 LCDCF_ON 位（关闭 LCD）
+    ld [rLCDC], a
+    ret
+
+EnableLCD:
+    ld a, [rLCDC]
+    or %10000000             ; 设置 LCDCF_ON 位（打开 LCD）
+    ld [rLCDC], a
+    ret
 ;not change-----------------------------------------------------------
 
 
@@ -6730,407 +6827,3 @@ InitializeObjects1:;pre
 
 
 
-;will in data.inc
-SECTION "TilesData", ROM0
-Tiles:
-; empty 0
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-; wall 1
-  dw `33333333
-  dw `33222233
-  dw `33222233
-  dw `33222233
-  dw `33222233
-  dw `33222233
-  dw `33222233
-  dw `33333333
-; full 2
-  dw `33333333
-  dw `33333333
-  dw `33333333
-  dw `33333333
-  dw `33333333
-  dw `33333333
-  dw `33333333
-  dw `33333333
-; left up corner 3
-  dw `00000000
-  dw `00333333
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-; left down corner 4
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00333333
-  dw `00000000
-; right up corner 5
-  dw `00000000
-  dw `33333300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-; right down corner 6
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `33333300
-  dw `00000000
-; left edge 7
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-  dw `00300000
-; right edge 8
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-  dw `00000300
-; up edge 9
-  dw `00000000
-  dw `33333333
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-; down edge 10
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `33333333
-  dw `00000000
-; 11 A
-  dw `00000000
-  dw `00333300
-  dw `03003330
-  dw `03003330
-  dw `03333330
-  dw `03003330
-  dw `03003330
-  dw `00000000
-; 12 B;bing
-  dw `00000000
-  dw `03333300
-  dw `03003330
-  dw `03333300
-  dw `03003330
-  dw `03003330
-  dw `03333300
-  dw `00000000
-; 13 C;caocao
-  dw `00000000
-  dw `00333300
-  dw `03003330
-  dw `03000000
-  dw `03000000
-  dw `03003330
-  dw `00333300
-  dw `00000000
-; 14 D
-  dw `00000000
-  dw `03333300
-  dw `03003330
-  dw `03003330
-  dw `03003330
-  dw `03003330
-  dw `03333300
-  dw `00000000
-; 15 E
-  dw `00000000
-  dw `03333330
-  dw `03000000
-  dw `03333300
-  dw `03000000
-  dw `03000000
-  dw `03333330
-  dw `00000000
-; 16 F;zhangfei
-  dw `00000000
-  dw `03333330
-  dw `03000000
-  dw `03000000
-  dw `03333300
-  dw `03000000
-  dw `03000000
-  dw `00000000
-; 17 G;
-  dw `00000000
-  dw `00333300
-  dw `03003330
-  dw `03000000
-  dw `03003330
-  dw `03003330
-  dw `00333330
-  dw `00000000
-; 18 H;huangzhong
-  dw `00000000
-  dw `03000330
-  dw `03000330
-  dw `03333330
-  dw `03000330
-  dw `03000330
-  dw `03000330
-  dw `00000000
-; 19 I
-  dw `00000000
-  dw `00333300
-  dw `00033000
-  dw `00033000
-  dw `00033000
-  dw `00033000
-  dw `00333300
-  dw `00000000
-; 20 J
-  dw `00000000
-  dw `00033330
-  dw `00003300
-  dw `00003300
-  dw `03003300
-  dw `03003300
-  dw `00333000
-  dw `00000000
-; 21 K
-  dw `00000000
-  dw `03003330
-  dw `03003300
-  dw `03033000
-  dw `03033000
-  dw `03003300
-  dw `03003330
-  dw `00000000
-; 22 L
-  dw `00000000
-  dw `03000000
-  dw `03000000
-  dw `03000000
-  dw `03000000
-  dw `03000000
-  dw `03333330
-  dw `00000000
-; 23 M macao
-  dw `00000000
-  dw `03000330
-  dw `03303330
-  dw `03333330
-  dw `03030330
-  dw `03000330
-  dw `03000330
-  dw `00000000
-; 24 N
-  dw `00000000
-  dw `03000330
-  dw `03003330
-  dw `03033330
-  dw `03033330
-  dw `03003330
-  dw `03000330
-  dw `00000000
-; 25 O
-  dw `00000000
-  dw `00333300
-  dw `03003330
-  dw `03003330
-  dw `03003330
-  dw `03003330
-  dw `00333300
-  dw `00000000
-; 26 P
-  dw `00000000
-  dw `03333300
-  dw `03003330
-  dw `03003330
-  dw `03333300
-  dw `03000000
-  dw `03000000
-  dw `00000000
-; 27 Q
-  dw `00000000
-  dw `00333300
-  dw `03000330
-  dw `03000330
-  dw `03030330
-  dw `03003300
-  dw `00333030
-  dw `00000000
-; 28 R
-  dw `00000000
-  dw `03333300
-  dw `03003330
-  dw `03003330
-  dw `03333300
-  dw `03003300
-  dw `03003330
-  dw `00000000
-; 29 S
-  dw `00000000
-  dw `00333300
-  dw `03000000
-  dw `00333300
-  dw `00003330
-  dw `03003330
-  dw `00333300
-  dw `00000000
-; 30 T
-  dw `00000000
-  dw `03333330
-  dw `00033000
-  dw `00033000
-  dw `00033000
-  dw `00033000
-  dw `00033000
-  dw `00000000
-; 31 U
-  dw `00000000
-  dw `03000330
-  dw `03000330
-  dw `03000330
-  dw `03000330
-  dw `03003330
-  dw `00333300
-  dw `00000000
-; 32 V
-  dw `00000000
-  dw `03000330
-  dw `03000330
-  dw `03000330
-  dw `03000330
-  dw `00333000
-  dw `00033000
-  dw `00000000
-; 33 W
-  dw `00000000
-  dw `03000330
-  dw `03000330
-  dw `03030330
-  dw `03333330
-  dw `03303330
-  dw `03000330
-  dw `00000000
-; 34 X
-  dw `00000000
-  dw `03000330
-  dw `00333000
-  dw `00033000
-  dw `00333000
-  dw `03000330
-  dw `03000330
-  dw `00000000
-; 35 Y guanyu
-  dw `00000000
-  dw `03003330
-  dw `03003330
-  dw `00333300
-  dw `00033000
-  dw `00033000
-  dw `00033000
-  dw `00000000
-; 36 Z;zhaoyun
-  dw `00000000
-  dw `03333330
-  dw `00003330
-  dw `00033300
-  dw `00333000
-  dw `03330000
-  dw `03333330
-  dw `00000000
-; . 37
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00330000
-  dw `00330000
-  dw `00000000
-; - 38
-  dw `00000000
-  dw `00000000
-  dw `00000000
-  dw `00333300
-  dw `00333300
-  dw `00000000
-  dw `00000000
-  dw `00000000
-;39 seclect
-  dw `00000000
-  dw `00033000
-  dw `00300300
-  dw `00300300
-  dw `00300300
-  dw `00300300
-  dw `00033000
-  dw `00000000
-TilesEnd:
-
-
-SECTION "Background", ROM0
-Background:
-DB 01,01,01,01,01,01,01,01,01,01,01,01,01,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,04,10,06,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,36,08,07,35,00,00,35,08,07,23,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,00,08,04,10,10,10,10,06,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,00,08,03,09,05,03,09,05,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,36,08,07,12,08,07,12,08,07,23,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,04,10,06,04,10,06,04,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,03,09,05,00,00,00,00,00,00,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,12,08,00,00,00,00,00,00,07,12,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,04,10,06,00,00,00,00,00,00,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,01,01,01,02,02,02,02,02,02,01,01,01,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 02,02,02,02,02,02,02,02,02,02,02,02,02,02,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-BackgroundEnd:
-
-SECTION "Variables", WRAM0
-ShadowOAM: DS 160 
-previous: DS 1
-current: DS 1
-
-positioninmachao: DS 1;
-positionincaocao: DS 1;
-positioninzhangfei: DS 1;
-positioninhuangzhong: DS 1;
-positioninguanyu: DS 1;
-positioninzhaoyun: DS 1;
-fsmState: DS 1
-current2: DS 1
-currentpixel: DS 2
-currenttile: DS 1
-forcheckselect: DS 1
