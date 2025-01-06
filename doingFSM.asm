@@ -64,13 +64,7 @@ SECTION "Functions", ROM0;------------------------------------------------------
 
 
 
-selectobjwaspressed:
-  
-  
-  ld a,1
-  ld [fsmState],a
-  
-  ret
+
 
 checkselect:
   
@@ -2278,55 +2272,55 @@ bingGoDown:
  ld a,[hl]
  ld [hl],12;bing
 
- ld a,[ShadowOAM];y
- ;sub 16;fist 16 must sub ,get y in the background
- add 8;24 check down
- ld c,a
- ld a,[ShadowOAM+1];x
- sub 8;fist 8 must sub
- ld b,a
- call GetTileByPixel
- ld a,[hl];           left position
- cp 12;bing
- ret z;if is bing ,return
- cp 13;caocao
- ret z;if is caocao ,return
- cp 16;zhangfei
- ret z;if is zhangfei ,return
- cp 18;huangzhong
- ret z;if is huangzhong ,return
- cp 23;machao
- ret z;if is machao ,return
- cp 35;guanyu
- ret z;if is guanyu ,return
- cp 36;zhaoyun
- ret z;if is zhaoyun ,return
+  ld a,[ShadowOAM];y
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8;24 check down
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 12;bing
+  ret z;if is bing ,return
+  cp 13;caocao
+  ret z;if is caocao ,return
+  cp 16;zhangfei
+  ret z;if is zhangfei ,return
+  cp 18;huangzhong
+  ret z;if is huangzhong ,return
+  cp 23;machao
+  ret z;if is machao ,return
+  cp 35;guanyu
+  ret z;if is guanyu ,return
+  cp 36;zhaoyun
+  ret z;if is zhaoyun ,return
 
- ld a,[ShadowOAM];y
- ;sub 16;fist 16 must sub ,get y in the background
- ;add 16;16 check down wall
- ld c,a
- ld a,[ShadowOAM+1];x
- sub 8;fist 8 must sub
- ;add 16;16 check left wall
- ld b,a
- call GetTileByPixel
- ld a,[hl];           left position
- cp 1;wall
- ret z;if is wall ,return
- cp 2;full
- ret z;if is full ,return
+  ld a,[ShadowOAM];y
+  ;sub 16;fist 16 must sub ,get y in the background
+  ;add 16;16 check down wall
+  ld c,a
+  ld a,[ShadowOAM+1];x
+  sub 8;fist 8 must sub
+  ;add 16;16 check left wall
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl];                     left position
+  cp 1;wall
+  ret z;if is wall ,return
+  cp 2;full
+  ret z;if is full ,return
 
 ;not wall
- inc hl
- inc hl
- call .updatebingbackground
- ld hl,ShadowOAM
- ld a,[hl]
- add 24
- ld [hl],a
+  inc hl
+  inc hl
+  call .updatebingbackground
+  ld hl,ShadowOAM
+  ld a,[hl]
+  add 24
+  ld [hl],a
 
- ret
+  ret
 .updatebingbackground:
   dec hl
   dec hl
@@ -2579,12 +2573,12 @@ InitializeObjects:
 
 
 
-updateFSM:
+updateFSM:;!!!!!!jp不会返回
   ld a,[fsmState]
   cp 0
-  jr z, state0
+  jp z, state0
   cp 1
-  jr z, state1
+  jp z, state1
   ret
 
 state0:
@@ -2592,11 +2586,15 @@ state0:
   ld [current2],a
   ld hl,current
   bit 2,[hl]
-  call nz, selectobjwaspressed
-  ret nz
+  jp nz, selectobjwaspressed
   call selectobjchangedirection
-
   ret
+
+selectobjwaspressed:
+  ld a,1
+  ld [fsmState],a
+  ret
+
 
 state1:; in select
   ld a,1
@@ -3218,10 +3216,10 @@ SECTION "Background", ROM0
 Background:
 DB 01,01,01,01,01,01,01,01,01,01,01,01,01,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,23,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,23,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,04,10,06,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 
