@@ -4568,54 +4568,7 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngecaocao:
-  ld a,[currentpixel]
-  ld h,a
-  ld a,[currentpixel+1]
-  ld l,a
-
-  ;hl-32*3下角
-  ld a, l        ; 将 L 的值加载到 A
-  sub 96
-  ld l, a        ; 将结果存回 L
-  ld a, h        ; 将 H 的值加载到 A
-  sbc 0          ; A = H - 借位
-  ld h, a 
-  ld a,[hl]
-
-  cp 13
-  call z, .downcao
-
-  ld a,[currentpixel]
-  ld h,a
-  ld a,[currentpixel+1]
-  ld l,a
-
-  ;hl-3右角
-  ld a, l        ; 将 L 的值加载到 A
-  sub 3
-  ld l, a        ; 将结果存回 L
-  ld a, h        ; 将 H 的值加载到 A
-  sbc 0          ; A = H - 借位
-  ld h, a 
-  ld a,[hl]
-  
-  cp 13
-  call z,.upcao
-
-  ret
-
-.downcao
-  ld hl,ShadowOAM
-  ld a,[hl]
-  sub 24
-  ld [hl],a
-  ret
-
-.upcao
-  ld hl,ShadowOAM+1
-  ld a,[hl]
-  sub 24
-  ld [hl],a
+  call returnstate0
   ret
 
 
@@ -5817,12 +5770,13 @@ checkcaocaoout:
   ld b,a
   call GetTileByPixel
   ld a,[hl]
+
   cp 13;caocao
   jp z,caocaoout
   ret
 
 caocaoout:
-  ld a,13
+  ld a,39
   ld [ShadowOAM+6],a
   ret
 
@@ -6561,6 +6515,8 @@ MaybeReset:
   ret
 
 Resetpage1:
+  ld a,0
+  ld [counter],a
   call DisableLCD
   call ClearVRAM
   call CopyBGToVRAM
