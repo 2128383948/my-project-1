@@ -136,14 +136,17 @@ guanyuselect:;---------------------------------------------------------------gua
   call findpositioninguanyu;if is 左上角，改图
   ld a,[positioninguanyu];在move后改回1
   cp 1
-  jr z ,notcahngeguanyu;not 左上角 不改图
+  call z ,notcahngeguanyu;not 左上角
   
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngeguanyu:
-  call returnstate0
+  ld hl, ShadowOAM+1
+  ld a,[hl]
+  sub 24
+  ld [hl], a
   ret
 
 findpositioninguanyu:;检测右边是否为G
@@ -928,14 +931,17 @@ zhangfeiselect:;---------------------------------------------------------------z
   call findpositioninzhangfei;if is 左上角，改图
   ld a,[positioninzhangfei];在move后改回1
   cp 1
-  jr z ,notcahngezhangfei;not 左上角 不改图
+  call z ,notcahngezhangfei;not 左上角
   
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngezhangfei:
-  call returnstate0
+  ld hl, ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl], a
   ret
 
 findpositioninzhangfei:;检测对角是否为Z
@@ -1830,14 +1836,17 @@ huangzhongselect:;-------------------------------------------------------huangzh
   call findpositioninhuangzhong;if is 左上角，改图
   ld a,[positioninhuangzhong];在move后改回1
   cp 1
-  jr z ,notcahngehuangzhong;not 左上角 不改图
+  jr z ,notcahngehuangzhong;not 左上角
   
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngehuangzhong:
-  call returnstate0
+  ld hl, ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl], a
   ret
 
 
@@ -2734,14 +2743,17 @@ zhaoyunselect:;--------------------------------------------------------zhaoyun
   call findpositioninzhaoyun;if is 左上角，改图
   ld a,[positioninzhaoyun];在move后改回1
   cp 1
-  jr z ,notcahngezhaoyun;not 左上角 不改图
+  jr z ,notcahngezhaoyun;not 左上角
   
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngezhaoyun:
-  call returnstate0
+  ld hl, ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl], a
   ret
 
 
@@ -3639,14 +3651,17 @@ machaoselect:;-----------------------------------------------machao have porblem
   call findpositioninmachao;if is 左上角，改图
   ld a,[positioninmachao];在move后改回1
   cp 1
-  jr z ,notcahngemachao;not 左上角 不改图
+  jr z ,notcahngemachao;not 左上角
   
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngemachao:
-  call returnstate0
+  ld hl, ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl], a
   ret
 
 
@@ -4553,8 +4568,56 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   ld [hl],38;change selectobject（改obj）
   ret
 notcahngecaocao:
-  call returnstate0
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+
+  ;hl-32*3下角
+  ld a, l        ; 将 L 的值加载到 A
+  sub 96
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a 
+  ;ld a,[hl]
+
+  cp 13
+  call z, .downcao
+
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+
+  ;hl-3右角
+  ld a, l        ; 将 L 的值加载到 A
+  sub 3
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a 
+  ld a,[hl]
+  
+  cp 13
+  call z,.upcao
+
   ret
+
+.downcao
+  ld hl,ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+  ret
+
+.upcao
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+  ret
+
 
 findpositionincao:;检测对角是否为C 
   ;检测是否在左上角
