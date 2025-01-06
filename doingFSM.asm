@@ -64,13 +64,7 @@ SECTION "Functions", ROM0;------------------------------------------------------
 
 
 
-selectobjwaspressed:
-  
-  
-  ld a,1
-  ld [fsmState],a
-  
-  ret
+
 
 checkselect:
   
@@ -2042,8 +2036,8 @@ bingGoDown:
   ld [hl],12;bing
 
   ld a,[ShadowOAM];y
-  sub 16;fist 16 must sub ,get y in the background
-  add 24;24 check down
+  ;sub 16;fist 16 must sub ,get y in the background
+  add 8;24 check down
   ld c,a
   ld a,[ShadowOAM+1];x
   sub 8;fist 8 must sub
@@ -2066,12 +2060,12 @@ bingGoDown:
   ret z;if is zhaoyun ,return
 
   ld a,[ShadowOAM];y
-  sub 16;fist 16 must sub ,get y in the background
-  add 16;16 check down wall
+  ;sub 16;fist 16 must sub ,get y in the background
+  ;add 16;16 check down wall
   ld c,a
   ld a,[ShadowOAM+1];x
   sub 8;fist 8 must sub
-  add 16;16 check left wall
+  ;add 16;16 check left wall
   ld b,a
   call GetTileByPixel
   ld a,[hl];                     left position
@@ -2081,7 +2075,8 @@ bingGoDown:
   ret z;if is full ,return
 
 ;not wall
-
+  inc hl
+  inc hl
   call .updatebingbackground
   ld hl,ShadowOAM
   ld a,[hl]
@@ -2187,16 +2182,28 @@ checkselect2:
   ld a,[currenttile]
   cp 12;B
   call z, bingmove ;third
+
+  ld a,[currenttile]
   cp 13;C
   call z, caocaomove
+
+  ld a,[currenttile]
   cp 16;F zhangfei
   ;call z, zhangfeimove
+
+  ld a,[currenttile]
   cp 18;H huangzhong
   ;call z, huangzhongmove
+
+  ld a,[currenttile]
   cp 23;M machao
   call z, machaomove
+
+  ld a,[currenttile]
   cp 35;Y guanyu
   ;call z, guanyumove
+
+  ld a,[currenttile]
   cp 36;Z zhaoyun
   ;call z, zhaoyunmove
   ret
@@ -2328,12 +2335,12 @@ InitializeObjects:
 
 
 
-updateFSM:
+updateFSM:;!!!!!!jp不会返回
   ld a,[fsmState]
   cp 0
-  jr z, state0
+  jp z, state0
   cp 1
-  jr z, state1
+  jp z, state1
   ret
 
 state0:
@@ -2341,11 +2348,15 @@ state0:
   ld [current2],a
   ld hl,current
   bit 2,[hl]
-  call nz, selectobjwaspressed
-  ret nz
+  jp nz, selectobjwaspressed
   call selectobjchangedirection
-
   ret
+
+selectobjwaspressed:
+  ld a,1
+  ld [fsmState],a
+  ret
+
 
 state1:; in select
   ld a,1
@@ -2967,10 +2978,10 @@ SECTION "Background", ROM0
 Background:
 DB 01,01,01,01,01,01,01,01,01,01,01,01,01,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,23,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,00,08,07,00,00,00,00,08,07,00,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-DB 01,07,16,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+DB 01,07,23,08,07,13,00,00,13,08,07,18,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,04,10,06,04,10,10,10,10,06,04,10,06,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,03,09,05,03,09,09,09,09,05,03,09,05,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 DB 01,07,36,08,07,35,00,00,35,08,07,23,08,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
