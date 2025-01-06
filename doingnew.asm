@@ -4561,8 +4561,8 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   call findpositionincao;if is 左上角，改图
   ld a,[positionincaocao];在move后改回1
   cp 1
-  jr z ,notcahngecaocao;not 左上角 不改图
-  
+  jr z ,notcahngecaocao;not 左上角
+
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
@@ -4580,7 +4580,7 @@ notcahngecaocao:
   ld a, h        ; 将 H 的值加载到 A
   sbc 0          ; A = H - 借位
   ld h, a 
-  ;ld a,[hl]
+  ld a,[hl]
 
   cp 13
   call z, .downcao
@@ -5806,9 +5806,25 @@ caocaoGoDown:
   ld [hl],0;(0,1)
   dec hl
   ld [hl],0;(0,0)
-
+  call checkcaocaoout
+  ret
+checkcaocaoout:
+  ld a,[ShadowOAM+4];y
+  sub 16
+  ld c,a
+  ld a,[ShadowOAM+5];x
+  sub 8
+  ld b,a
+  call GetTileByPixel
+  ld a,[hl]
+  cp 13;caocao
+  jp z,caocaoout
   ret
 
+caocaoout:
+  ld a,13
+  ld [ShadowOAM+6],a
+  ret
 
 
 
@@ -6565,14 +6581,14 @@ InitializeObjects:
   inc      hl
   ld      [hl], %10000000 ;under the background
   inc      hl
-  ; second object for testing
-  ld a,32+24*4
+  ; second object for caocao
+  ld a,32+24*5
   ld [hl], a
   inc      hl          ; point to first object`s X
-  ld a,24
+  ld a,24+24
   ld [hl], a
   inc      hl
-  ld       [hl], 0   ; empty
+  ld       [hl], 2   ; empty
   inc      hl
   ;ld       [hl], %10000000 ;under the background
   ret
