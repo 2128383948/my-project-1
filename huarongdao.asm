@@ -4618,6 +4618,8 @@ machaoGoDown:
 
 
 caocaosselect:;会被多次调用-------------------------------------caocao
+  ;call .fixcaocaoselect
+
   ld a,13
   ld [currenttile],a;save caocao tile
   ld a,[currentpixel]
@@ -4626,14 +4628,80 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   ld l,a
 
   call findpositionincao;if is 左上角，改图
+
+
   ld a,[positionincaocao];在move后改回1
   cp 1
-  jr z ,notcahngecaocao;not 左上角
+  jp z ,notcahngecaocao;not 左上角
 
   ;ld [hl],39;更改为其他(改C)
   ld hl,ShadowOAM+2
   ld [hl],38;change selectobject（改obj）
   ret
+
+
+.fixcaocaoselect:
+.l:
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+
+  ;hl-3 too right
+  ld a, l        ; 将 L 的值加载到 A
+  sub 3
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld a,[hl]
+  cp 13
+  jp nz, .u
+
+  ld hl,ShadowOAM+1
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+
+  ld a,h
+  ld [currentpixel],a
+  ld a,l
+  ld [currentpixel+1],a
+
+.u:
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+
+
+  ;hl-32 too down
+  ld a, l        ; 将 L 的值加载到 A
+  sub 32
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
+  ld a,[hl]
+  cp 13
+  ret nz
+  
+  ld hl,ShadowOAM
+  ld a,[hl]
+  sub 24
+  ld [hl],a
+
+  ld a,h
+  ld [currentpixel],a
+  ld a,l
+  ld [currentpixel+1],a
+.done
+  ret
+
+
+
 notcahngecaocao:
   call returnstate0
   ret
