@@ -4688,6 +4688,19 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   sub 24
   ld [hl],a
 
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+
+  ;hl-3 
+  ld a, l        ; 将 L 的值加载到 A
+  sub 3
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
+
   ld a,h
   ld [currentpixel],a
   ld a,l
@@ -4700,9 +4713,9 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   ld l,a
 
 
-  ;hl-32 too down
+  ;hl-96 too down
   ld a, l        ; 将 L 的值加载到 A
-  sub 32
+  sub 96
   ld l, a        ; 将结果存回 L
   ld a, h        ; 将 H 的值加载到 A
   sbc 0          ; A = H - 借位
@@ -4716,6 +4729,19 @@ caocaosselect:;会被多次调用-------------------------------------caocao
   ld a,[hl]
   sub 24
   ld [hl],a
+
+  ld a,[currentpixel]
+  ld h,a
+  ld a,[currentpixel+1]
+  ld l,a
+
+  ;hl-96
+  ld a, l        ; 将 L 的值加载到 A
+  sub 96
+  ld l, a        ; 将结果存回 L
+  ld a, h        ; 将 H 的值加载到 A
+  sbc 0          ; A = H - 借位
+  ld h, a
 
   ld a,h
   ld [currentpixel],a
