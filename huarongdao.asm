@@ -7117,9 +7117,9 @@ caocaoji:
   ld [ShadowOAM+6],a
   call DisableLCD
   call ClearVRAM  
-  ld de, Winpage
+  ld de, Failpage
   ld hl, $9800;_SCRN0
-  ld bc, WinpageEnd - Winpage
+  ld bc, FailpageEnd - Failpage
   call CopyMemory
   call EnableLCD
   ret
