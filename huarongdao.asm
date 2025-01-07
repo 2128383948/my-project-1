@@ -7003,10 +7003,21 @@ EnableLCD:
 IncrementCounter:
   ld a, [counter]
   cp 255
-  jr z, .done
+  jr z, caocaoji
   inc a
   ld [counter], a
-.done
+  ret
+caocaoji:
+  ld a,0
+  ld [ShadowOAM+2],a
+  ld [ShadowOAM+6],a
+  call DisableLCD
+  call ClearVRAM  
+  ld de, Winpage
+  ld hl, $9800;_SCRN0
+  ld bc, WinpageEnd - Winpage
+  call CopyMemory
+  call EnableLCD
   ret
 
 binToDec:
