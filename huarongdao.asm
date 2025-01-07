@@ -55,6 +55,7 @@ EntryPoint:
   ld [positioninguanyu],a
   ld [positioninzhaoyun],a
   ld [hadgoto],a;gai
+  ld [ifneedreturn],a
 
 MainLoop:;--------------------------------------------------------------------------------
   ld a, [gamestate] 
@@ -101,6 +102,8 @@ Maygoto:;gai
   ret
 increasegotostate:;if changestate is 4,change to 1
   call InitializeObjects
+  ld a,1
+  ld [ifneedreturn],a;new
   ld a,0
   ld [counter],a
   ld a,2
@@ -4830,6 +4833,7 @@ caocaoout:
  ld a,0
  ld [ShadowOAM+2],a
  ld [ShadowOAM+6],a
+ ld [ifneedreturn],a
  call printcaocao
  ret
 
@@ -6718,7 +6722,9 @@ MaybeReset:
   call nz, returnstate0
   ret
 
-Resetpage1:;gai
+Resetpage1:;gainew
+  ld a,1
+  ld [ifneedreturn],a
   ld a,0
   ld [counter],a
   call DisableLCD
@@ -6781,9 +6787,13 @@ state0:
   ld a,0
   ld [current2],a
   ld hl,current
+  ld a,[ifneedreturn];new if is 0,return
+  cp 0
+  jp z, .done
   bit 0,[hl]
   jp nz, selectobjwaspressed
   call selectobjchangedirection
+.done
   ret
 
 selectobjwaspressed:
@@ -7115,6 +7125,7 @@ caocaoji:
   ld a,0
   ld [ShadowOAM+2],a
   ld [ShadowOAM+6],a
+  ld [ifneedreturn],a;new
   call DisableLCD
   call ClearVRAM  
   ld de, Failpage

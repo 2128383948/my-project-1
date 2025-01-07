@@ -769,3 +769,4 @@ counter: DS 1
 buffer: DS 3
 gotostate: DS 1
 hadgoto: DS 1
+ifneedreturn: DS 1
