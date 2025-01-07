@@ -4642,7 +4642,7 @@ machaoGoDown:
 
 
 caocaosselect:;会被多次调用-------------------------------------caocao
-  ;call .fixcaocaoselect
+  call .fixcaocaoselect
 
   ld a,13
   ld [currenttile],a;save caocao tile
