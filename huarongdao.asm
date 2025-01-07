@@ -6874,6 +6874,8 @@ CopyMemory:
   ret
 
 CopyBGToVRAM:
+  ld a,41
+  ld [ShadowOAM+6],a
   call DisableLCD
   ld de, Background
   ld hl, $9800;_SCRN0
@@ -6883,6 +6885,8 @@ CopyBGToVRAM:
   ret
 
 CopyBGToVRAMsecond:
+  ld a,42
+  ld [ShadowOAM+6],a
   call DisableLCD
   ld de, Backgroundse
   ld hl, $9800;_SCRN0
@@ -6892,6 +6896,8 @@ CopyBGToVRAMsecond:
   ret
 
 CopyBGToVRAMthird:
+  ld a,43
+  ld [ShadowOAM+6],a
   call DisableLCD
   ld de, Backgroundth
   ld hl, $9800;_SCRN0
@@ -6901,6 +6907,8 @@ CopyBGToVRAMthird:
   ret
 
 CopyBGToVRAMfour:
+  ld a,44
+  ld [ShadowOAM+6],a
   call DisableLCD
   ld de, Background4
   ld hl, $9800;_SCRN0
@@ -6910,6 +6918,8 @@ CopyBGToVRAMfour:
   ret
 
 CopyBGToVRAMfive:
+  ld a,45
+  ld [ShadowOAM+6],a
   call DisableLCD
   ld de, Background5
   ld hl, $9800;_SCRN0
