@@ -100,13 +100,14 @@ Maygoto:;gai
 
   ret
 increasegotostate:;if changestate is 4,change to 1
+  call InitializeObjects
   ld a,0
   ld [counter],a
   ld a,2
   ld [hadgoto],a;记得改回1
   ld a,[gotostate]
   inc a
-  cp 4
+  cp 6
   jp z,returngotostate
   ld [gotostate],a
   ret
@@ -126,6 +127,12 @@ needgoto:;gai
   ld a,[gotostate]
   cp 3
   call z, gotothird
+  ld a,[gotostate]
+  cp 4
+  call z, gotofour
+  ld a,[gotostate]
+  cp 5
+  call z, gotofive
   ld a,1
   ld [hadgoto],a
   ret
@@ -157,6 +164,24 @@ gotothird:
   call EnableLCD
   ret
 
+
+gotofour:
+  ld a, 44
+  ld [ShadowOAM+6], a
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAMfour
+  call EnableLCD
+  ret
+
+gotofive:
+  ld a, 45
+  ld [ShadowOAM+6], a
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAMfive
+  call EnableLCD
+  ret
 
 checkselect:
   
@@ -6613,6 +6638,12 @@ Resetpage1:;gai
   ld a,[gotostate]
   cp 3
   call z, CopyBGToVRAMthird
+  ld a,[gotostate]
+  cp 4
+  call z, CopyBGToVRAMfour
+  ld a,[gotostate]
+  cp 5
+  call z, CopyBGToVRAMfive
   call EnableLCD
   ret
 
@@ -6865,6 +6896,24 @@ CopyBGToVRAMthird:
   ld de, Backgroundth
   ld hl, $9800;_SCRN0
   ld bc, BackgroundEndth - Backgroundth
+  call CopyMemory
+  call EnableLCD
+  ret
+
+CopyBGToVRAMfour:
+  call DisableLCD
+  ld de, Background4
+  ld hl, $9800;_SCRN0
+  ld bc, BackgroundEnd4 - Background4
+  call CopyMemory
+  call EnableLCD
+  ret
+
+CopyBGToVRAMfive:
+  call DisableLCD
+  ld de, Background5
+  ld hl, $9800;_SCRN0
+  ld bc, BackgroundEnd5 - Background5
   call CopyMemory
   call EnableLCD
   ret
