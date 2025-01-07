@@ -37,28 +37,33 @@ EntryPoint:
   ld [buffer],a
   ld [buffer+1],a
   ld [buffer+2],a
-
+  ld [gamestate],a
+  ld [current],a
 ; LCD on, enable object layer (no background)
   ld a, LCDCF_ON | LCDCF_OBJON | LCDCF_BGON | LCDCF_BG8000
   ld [rLCDC], a
-  ld [gamestate],a
+
 
 
 ;初始化变量
   ld a,1;初始化为1,
+  ld [gotostate],a;gai
   ld [positionincaocao],a
   ld [positioninzhangfei],a
   ld [positioninhuangzhong],a
   ld [positioninmachao],a
   ld [positioninguanyu],a
   ld [positioninzhaoyun],a
+  ld [hadgoto],a;gai
 
 MainLoop:;--------------------------------------------------------------------------------
   ld a, [gamestate] 
   cp 1
   call nz,Titlemainloop
-
-  Call Gamemainloop
+  ld a, [hadgoto];gai
+  cp 2
+  call z, needgoto;gai
+  call Gamemainloop
   jp MainLoop
 
 SECTION "Functions", ROM0;------------------------------------------------------------
@@ -79,7 +84,7 @@ betweenTitleandmap:
 
 Gamemainloop:
   call readKeys
-
+  call Maygoto;gai
   call MaybeReset  ;check if A was pressed not yet
   call updateFSM;new
   call binToDec
@@ -88,8 +93,69 @@ Gamemainloop:
   call copyDigitsRev
   ret
 
+Maygoto:;gai
+  ld hl,current
+  bit 1, [hl] ; check if B was pressed
+  call nz, increasegotostate
+
+  ret
+increasegotostate:;if changestate is 4,change to 1
+  ld a,0
+  ld [counter],a
+  ld a,2
+  ld [hadgoto],a;记得改回1
+  ld a,[gotostate]
+  inc a
+  cp 4
+  jp z,returngotostate
+  ld [gotostate],a
+  ret
+returngotostate:
+  ld a,1
+  ld [gotostate],a
+  ret
 
 
+needgoto:;gai
+  ld a,[gotostate]
+  cp 1
+  call z, gotofirst
+  ld a,[gotostate]
+  cp 2
+  call z, gotosecond
+  ld a,[gotostate]
+  cp 3
+  call z, gotothird
+  ld a,1
+  ld [hadgoto],a
+  ret
+
+gotofirst:
+  ld a, 41
+  ld [ShadowOAM+6], a
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAM
+  call EnableLCD
+  ret
+
+gotosecond:
+  ld a, 42
+  ld [ShadowOAM+6], a
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAMsecond
+  call EnableLCD
+  ret
+
+gotothird:
+  ld a, 43
+  ld [ShadowOAM+6], a
+  call DisableLCD
+  call ClearVRAM
+  call CopyBGToVRAMthird
+  call EnableLCD
+  ret
 
 
 checkselect:
@@ -6527,18 +6593,26 @@ GoDown:
 
 MaybeReset:
   ld hl,current
-  bit 0, [hl] ; check if A was pressed
+  bit 2, [hl] ; check if A was pressed
   call nz, Resetpage1
-  call nz, InitializeObjects 
+  ;call nz, InitializeObjects 
   call nz, returnstate0
   ret
 
-Resetpage1:
+Resetpage1:;gai
   ld a,0
   ld [counter],a
   call DisableLCD
   call ClearVRAM
-  call CopyBGToVRAM
+  ld a,[gotostate]
+  cp 1
+  call z, CopyBGToVRAM
+  ld a,[gotostate]
+  cp 2
+  call z, CopyBGToVRAMsecond
+  ld a,[gotostate]
+  cp 3
+  call z, CopyBGToVRAMthird
   call EnableLCD
   ret
 
@@ -6563,7 +6637,7 @@ InitializeObjects:
   ld a,24+24
   ld [hl], a
   inc      hl
-  ld       [hl], 2   ; empty
+  ld       [hl], 41  ; empty
   inc      hl
   ;ld       [hl], %10000000 ;under the background
   ret
@@ -6582,7 +6656,7 @@ state0:
   ld a,0
   ld [current2],a
   ld hl,current
-  bit 2,[hl]
+  bit 0,[hl]
   jp nz, selectobjwaspressed
   call selectobjchangedirection
   ret
@@ -6773,6 +6847,24 @@ CopyBGToVRAM:
   ld de, Background
   ld hl, $9800;_SCRN0
   ld bc, BackgroundEnd - Background
+  call CopyMemory
+  call EnableLCD
+  ret
+
+CopyBGToVRAMsecond:
+  call DisableLCD
+  ld de, Backgroundse
+  ld hl, $9800;_SCRN0
+  ld bc, BackgroundEndse - Backgroundse
+  call CopyMemory
+  call EnableLCD
+  ret
+
+CopyBGToVRAMthird:
+  call DisableLCD
+  ld de, Backgroundth
+  ld hl, $9800;_SCRN0
+  ld bc, BackgroundEndth - Backgroundth
   call CopyMemory
   call EnableLCD
   ret
